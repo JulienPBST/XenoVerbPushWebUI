@@ -181,7 +181,7 @@
 <div class="wrap">
 	<header>
 		<h1>XenoVerb Wrapper <span>on Push 3 · Device mode</span></h1>
-		<p>Two banks: Reverb, with the eight knobs in the device's order, and Algorithm. Active, Freeze, Limiter and HQ sit on the buttons above the display. Turn the encoders, press the buttons, switch banks. No sound, values are simulated.</p>
+		<p>Two banks: Reverb, with the eight knobs in the device's order, and Algorithm. Active, Freeze, Limiter and HQ sit on the buttons above the display. Encoders 6 and 7 follow the algorithm: Size and LF Cut on Room, Pitch A and Pitch B on Shimmer… Turn the encoders, press the buttons, switch banks. No sound, values are simulated.</p>
 	</header>
 
 	<div class="rig"><canvas id="push" aria-label="Push 3 in Device mode: encoders, display buttons and display"></canvas></div>
@@ -553,7 +553,7 @@ window.XV_PARAMS = [
       host.appendChild(svg);
       const root = svgEl('g', { 'font-family': "'AS', 'Helvetica Neue', Arial, sans-serif" }, svg);
       const S = { noplug: 0, plug: { fmt: 'VST3', file: 'XenoVerb.vst3' } };
-      let hover = null, drag = null, pushTimer = null;
+      let hover = null, drag = null;
       function render() {
         FOCUS.k = drag ? drag.k : hover || FOCUS.push || null;
         root.replaceChildren();
@@ -629,11 +629,10 @@ window.XV_PARAMS = [
         accent: a => { OPTS.accent = a; setTheme(themeName); render(); },
         theme: t => { setTheme(t); render(); },
         noplug: n => { S.noplug = n; render(); },
-        // Push : un réglage tourné sur Push s'affiche 1,5 s dans l'afficheur, si PUSH est allumé
+        // Push : le dernier réglage tourné sur Push reste dans l'afficheur, si PUSH est allumé
         pushTouched(k) {
           if (!UI.follow || !knobOf(k)) { render(); return; }
           FOCUS.push = k; render();
-          clearTimeout(pushTimer); pushTimer = setTimeout(() => { FOCUS.push = null; render(); }, 1500);
         } };
     };
   }
@@ -662,8 +661,10 @@ window.XV_PARAMS = [
 </script>
 <script>
 // ui/push/names.js
-// Généré par tools/build.py : noms courts des paramètres (ceux que Push affiche).
+// Généré par tools/build.py : noms courts des paramètres (ceux que Push affiche) ;
+// XV_ROLES : nom court de Param 1 / Param 2 pour chaque algorithme (ordre de la XenoVerb).
 window.XV_SN = {"HQ": "HQ", "Type": "Algo", "PreDelay": "Pre Dly", "Diffuse": "Diffuse", "Time": "Time", "Mod": "Mod", "Tone": "Tone", "Param1": "Param 1", "Param2": "Param 2", "Mix": "Mix", "Active": "Active", "Freeze": "Freeze", "Limit": "Limiter"};
+window.XV_ROLES = {"Param1": ["Size", "Mid", "Mid", "Mid", "Chirp", "Mid", "Bloom", "Pitch A", "Freq", "Formant", "Size", "Mid", "Mid"], "Param2": ["LF Cut", "LF Cut", "LF Cut", "LF Cut", "LF Cut", "LF Cut", "LF Cut", "Pitch B", "Band Mix", "Peak", "LF Cut", "LF Cut", "LF Cut"]};
 </script>
 <script>
 // ui/push/model.js
@@ -701,7 +702,9 @@ window.XV_SN = {"HQ": "HQ", "Type": "Algo", "PreDelay": "Pre Dly", "Diffuse": "D
 	}
 	const norm = (k) => V[k] ?? 0;
 	const opts = (k) => P[k].options;
-	const name = (k) => OWN[k].sn;
+	// Param 1 / Param 2 : un paramètre Live par rôle ; la banque Reverb montre celui de l'algorithme choisi
+	const ROLES = window.XV_ROLES || {};
+	const name = (k) => (ROLES[k] ? ROLES[k][V.Type] : OWN[k].sn);
 	// value text: the list text, or the device's text (the XenoVerb's own text in the device)
 	const fmt = (k) => (P[k].options ? opts(k)[idx(k)] : X.fmt(X.knobOf(k)));
 
